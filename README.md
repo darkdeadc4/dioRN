@@ -17,7 +17,7 @@
   - Node
   - Java 11 (JDK)
   - Yarn
-- Android Studio
+  - Android Studio
      - Download android S
      - Criar um avd (Android Virtual Device)
 - Criação do projeto
