@@ -1,20 +1,49 @@
-import React from 'react';
-import {View, Image, StyleSheet, SafeAreaView, StatusBar, Text, Pressable, Linking} from 'react-native';
+import React, {useState, useRef} from 'react';
+import {View, Image, StyleSheet, SafeAreaView, StatusBar, Text, Pressable, Linking, TextInput} from 'react-native';
 
 const colorGithub = '#010409';
 const colorFontGithub = '#c9d1d9';
 const colorDarkFontGithub = '#4f565e';
 
-const imageProfileGithub = 'https://avatars.githubusercontent.com/u/97718074?v=4';
-
 const urlToMyGithub = 'https://github.com/darkdeadc4';
 
 const App = () => {
 
+    const [profile, setProfile] = useState(null);
+    const [user, setUser] = useState(null);
+    const inputRef = useRef(null);
+
+    const handleRequestUserData = async () => {
+        if (inputRef.current) {
+            inputRef.current.blur();
+            inputRef.current.clear();
+        }
+
+        setProfile(null);
+
+        if (!user) return;
+        try {
+            const response = await fetch(`https://api.github.com/users/${user}`);
+            const data = await response.json();
+            console.log(data);
+            if (!response.ok) {
+                setUser(null);
+                return ;
+        }; 
+            setProfile(data);
+        } catch (err) {
+            console.log(err);
+        }
+
+        setUser(null);
+        
+    };
+
     const handlePressGoToGithub = async ()=>{
-        const res = await Linking.canOpenURL(urlToMyGithub);
+        if (!profile) return;
+        const res = await Linking.canOpenURL(profile.html_url);
         if(res) {
-            await Linking.openURL(urlToMyGithub);
+            await Linking.openURL(profile.html_url);
         }
     };
 
@@ -22,16 +51,27 @@ const App = () => {
         <SafeAreaView style={style.container}>
             <StatusBar backgroundColor={colorGithub} barStyle="light-content"/>
             <View style={style.content}>
-                <Image accessibilityLabel='Foto de perfil' style={style.avatar} source={{uri: imageProfileGithub}}/>
-                <Text accessibilityLabel='Nome: Cleiton Feitosa' style={[style.defaultText, style.name]}>Cleiton Feitosa</Text>
-                <Text accessibilityLabel='Nickname: darkdeadc4' style={[style.defaultText, style.nickname]}>darkdeadc4</Text>
-                <Text accessibilityLabel='Descrição: Developer Front-End' style={[style.defaultText, style.description]}>Developer Front-End</Text>
-                <Pressable onPress={handlePressGoToGithub}>
+                <TextInput ref={inputRef} style={style.input} onChangeText={(text) => setUser(text)} onSubmitEditing={handleRequestUserData}/>
+                <Pressable onPress={handleRequestUserData}>
                     <View style={style.button}>
-                    <Text style={[style.defaultText, style.textButton]}>Open in Github</Text>
+                    <Text style={[style.defaultText, style.textButton]}>Search</Text>
                     </View>
                 </Pressable>
             </View>
+
+            {profile && (
+            <View style={style.content}>
+                <Image accessibilityLabel='Foto de perfil' style={style.avatar} source={{uri: profile?.avatar_url}}/>
+                <Text accessibilityLabel='Nome do usuário' style={[style.defaultText, style.name]}>{profile?.name}</Text>
+                <Text accessibilityLabel='Nickname do usuário' style={[style.defaultText, style.nickname]}>{profile?.login}</Text>
+                <Text accessibilityLabel='Biografia do usuário' style={[style.defaultText, style.description]}>{profile?.bio}</Text>
+                    <Pressable onPress={handlePressGoToGithub}>
+                        <View style={style.button}>
+                        <Text style={[style.defaultText, style.     textButton]}>Open in Github</Text>
+                        </View>
+                    </Pressable>
+                </View>
+            )}    
         </SafeAreaView>   
     );
 };
@@ -42,7 +82,6 @@ const style = StyleSheet.create({
     container: {
         backgroundColor: colorGithub, // Definindo cor de fundo
         flex: 1, // Expandir para a tela inteira
-        justifyContent: 'center',
     },
 
     content: {
@@ -89,4 +128,10 @@ const style = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16, 
     },
+
+    input: {
+        backgroundColor: colorFontGithub,
+        minWidth: '60%',
+        fontSize: 20,
+    }
 });
